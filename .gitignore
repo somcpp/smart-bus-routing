@@ -1,0 +1,52 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.tmp
+
+# ---- Virtual Environment ----
+venv/
+ENV/
+env/
+.venv/
+
+# ---- IDE & Editor junk ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+
+# ---- Flask specific ----
+instance/
+*.log
+
+# ---- Matplotlib cache ----
+.matplotlib/
+
+# ---- Generated images ----
+*.png
+*.jpg
+*.jpeg
+
+# ---- Environment files ----
+.env
+*.env
+
+# ---- Build / dist ----
+build/
+dist/
+*.egg
+*.whl
+
+# ---- Jupyter (if you add later) ----
+.ipynb_checkpoints/
+
+# ---- PyInstaller (not needed now but safe) ----
+*.spec

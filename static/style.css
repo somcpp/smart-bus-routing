@@ -1,0 +1,5 @@
+body { font-family: Arial, sans-serif; padding: 24px; }
+.container { max-width: 900px; margin: auto; }
+label { display: inline-block; margin-right: 12px; }
+button { padding: 6px 12px; }
+img { max-width: 100%; height: auto; border: 1px solid #ddd; }

@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Smart Bus Routing</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Smart Bus Routing — Demo</h1>
+      <form method="post" action="/route">
+        <label>Source
+          <select name="source">
+            {% for n in nodes %}
+            <option value="{{n}}">{{n}}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>Target
+          <select name="target">
+            {% for n in nodes %}
+            <option value="{{n}}">{{n}}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <button type="submit">Find Optimized Route</button>
+      </form>
+
+      {% if result %}
+      <h2>Optimized Path: {{ result.path }}</h2>
+      <p>Path time (minutes): {{ result.time }}</p>
+
+      <h3>Wait Time Stats</h3>
+      <ul>
+        <li>Old total wait (minutes): {{ result.stats.old_total_wait_minutes }}</li>
+        <li>New total wait (minutes): {{ result.stats.new_total_wait_minutes }}</li>
+        <li>Absolute reduction (minutes): {{ result.stats.absolute_reduction_minutes }}</li>
+        <li>Percent reduction: {{ result.stats.percent_reduction }}%</li>
+      </ul>
+
+      <h3>Route visualization</h3>
+      <img src="{{ result.img }}" alt="route" />
+      {% endif %}
+
+    </div>
+  </body>
+</html>
