@@ -40,9 +40,25 @@ def route():
     img_inline = png_bytes_to_base64_inline(png)
 
     # compute node positions for interactive map
-    # center lat/lng set to Ghaziabad (Delhi NCR). Change to Muradnagar coords if preferred.
-    # Ghaziabad approx: 28.6692 N, 77.4538 E
-    positions = routing.get_node_positions(G, center_lat=28.6692, center_lng=77.4538, scale=0.03, seed=42)
+    # Prefer explicit positions if provided in the data file (sample_graph.json includes lat/lng per node)
+    data_positions = DATA.get('positions') if DATA else None
+    positions = {}
+    if data_positions:
+        # Use provided positions (ensure floats)
+        for n in G.nodes():
+            p = data_positions.get(n)
+            if p:
+                positions[n] = [float(p[0]), float(p[1])]
+        # if some nodes missing positions, compute fallback for them
+        missing = [n for n in G.nodes() if n not in positions]
+        if missing:
+            computed = routing.get_node_positions(G, center_lat=28.6692, center_lng=77.4538, scale=0.03, seed=42)
+            for n in missing:
+                positions[n] = [float(computed[n][0]), float(computed[n][1])]
+    else:
+        # compute positions around Ghaziabad if none provided
+        computed = routing.get_node_positions(G, center_lat=28.6692, center_lng=77.4538, scale=0.03, seed=42)
+        positions = {n: [float(v[0]), float(v[1])] for n, v in computed.items()}
 
     # prepare map JSON for frontend
     # positions: {node: [lat, lng]}, edges list for drawing optional
