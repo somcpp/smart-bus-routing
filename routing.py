@@ -11,10 +11,16 @@ def load_graph_from_file(path: str) -> Dict:
 
 def build_graph(data: Dict) -> nx.Graph:
     G = nx.Graph()
+    # if nodes include coords in data (optional), we will keep them in node attributes
     for n in data.get('nodes', []):
         G.add_node(n)
     for u, v, w in data.get('edges', []):
         G.add_edge(u, v, weight=w)
+    # if data contains positions, attach them to nodes as attributes
+    if 'positions' in data:
+        for node, pos in data['positions'].items():
+            if node in G:
+                G.nodes[node]['pos'] = tuple(pos)
     return G
 
 def shortest_path_and_length(G: nx.Graph, source: str, target: str) -> Tuple[List[str], float]:
@@ -73,11 +79,10 @@ def estimate_wait_reduction(old_route: List[str], optimized_route: List[str], in
         'optimized_route_time': round(new_time, 2),
         'old_interval': round(old_interval, 2),
         'new_interval': round(new_interval, 2),
-        'total_passengers': total_passengers,
-        'old_avg_wait': round(old_interval/2, 2),
-        'new_avg_wait': round(new_interval/2, 2)
+        'total_passengers': int(total_passengers),
+        'old_avg_wait': round(old_interval/2.0, 2),
+        'new_avg_wait': round(new_interval/2.0, 2)
     }
-
 
 # A tiny global used by estimate_wait_reduction; loaded from app when graph created
 G_global = None
@@ -85,3 +90,45 @@ G_global = None
 def set_global_graph(G: nx.Graph):
     global G_global
     G_global = G
+
+def get_node_positions(G: nx.Graph, center_lat=22.0, center_lng=77.0, scale=0.03, seed=42) -> Dict[str, Tuple[float, float]]:
+    """
+    Return a dict mapping node -> (lat, lng).
+    Priority:
+      1. if node has 'pos' attribute (from data), use that (assumed as [lat, lng])
+      2. otherwise compute a layout via networkx.spring_layout and map to lat/lng around center coords.
+
+    scale controls the spread (in degrees). Default center is arbitrary (India-ish).
+    """
+    positions = {}
+    # If nodes already have 'pos' attr, use them
+    has_any_pos = any('pos' in G.nodes[n] for n in G.nodes())
+    if has_any_pos:
+        for n in G.nodes():
+            p = G.nodes[n].get('pos')
+            if p:
+                # assume p is (lat, lng) or (y, x) -> keep as (lat, lng)
+                positions[n] = (float(p[0]), float(p[1]))
+            else:
+                positions[n] = (center_lat, center_lng)
+        return positions
+
+    # compute spring layout (2D)
+    layout = nx.spring_layout(G, seed=seed)
+    # layout maps nodes to coordinates in roughly [-1,1]. We'll normalize to lat/lng near center.
+    xs = [v[0] for v in layout.values()]
+    ys = [v[1] for v in layout.values()]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    # avoid division by zero
+    range_x = max_x - min_x if max_x - min_x != 0 else 1.0
+    range_y = max_y - min_y if max_y - min_y != 0 else 1.0
+
+    for n, (x, y) in layout.items():
+        # normalized in [ -0.5, 0.5 ] to keep nodes close
+        nxorm = (x - (min_x + max_x) / 2.0) / range_x
+        nyorm = (y - (min_y + max_y) / 2.0) / range_y
+        lat = center_lat + nyorm * scale
+        lng = center_lng + nxorm * scale
+        positions[n] = (float(lat), float(lng))
+    return positions

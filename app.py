@@ -35,17 +35,33 @@ def route():
 
     stats = routing.estimate_wait_reduction(old_route, path, interval, demand)
 
-    # generate visualization
+    # generate visualization (png fallback for old UI)
     png = draw_graph_highlight_path(G, path)
     img_inline = png_bytes_to_base64_inline(png)
-    pretty_path = " → ".join(path)
+
+    # compute node positions for interactive map
+    # center lat/lng set to Ghaziabad (Delhi NCR). Change to Muradnagar coords if preferred.
+    # Ghaziabad approx: 28.6692 N, 77.4538 E
+    positions = routing.get_node_positions(G, center_lat=28.6692, center_lng=77.4538, scale=0.03, seed=42)
+
+    # prepare map JSON for frontend
+    # positions: {node: [lat, lng]}, edges list for drawing optional
+    map_json = {
+        'positions': {n: [positions[n][0], positions[n][1]] for n in positions},
+        'path': path,
+        'edges': [[u, v] for u, v in G.edges()]
+    }
+
+    # pretty path for display (A → B → C)
+    pretty_path = " \u2192 ".join(path)
 
     return render_template('index.html', nodes=list(G.nodes()), result={
         'path': path,
-        'time': length,
         'path_pretty': pretty_path,
+        'time': round(length, 2),
         'stats': stats,
-        'img': img_inline
+        'img': img_inline,
+        'map_json': map_json
     })
 
 if __name__ == '__main__':

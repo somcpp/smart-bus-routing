@@ -2,6 +2,9 @@
 # Functions to draw the graph and highlight the chosen route. Returns PNG bytes.
 import io
 import base64
+import matplotlib
+# Use non-interactive backend to avoid opening a GUI (prevents tkinter/main-thread errors when running Flask)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import networkx as nx
 

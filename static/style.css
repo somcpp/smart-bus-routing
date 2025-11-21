@@ -332,3 +332,10 @@
   color: #333;
   opacity: 0.8;
 }
+
+/* ensure the interactive map has visible height */
+#map {
+  height: 420px;
+  border-radius: 8px;
+  margin-top: 12px;
+}

@@ -5,11 +5,10 @@
   <meta charset="utf-8" />
   <title>Smart Bus Routing</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <!-- Leaflet CSS for interactive maps (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
 </head>
-
 <body>
-
-  <body>
     <div class="container">
       <div class="header">
         <h1>🚌 Smart Bus Routing</h1>
@@ -89,14 +88,84 @@
             A faster route means buses arrive sooner, reducing waiting time for everyone.
           </p>
         </div>
+        
+        <h3 style="margin-top:18px;">📍 Route Visualization (Interactive)</h3>
+        <div id="map"></div>
 
-        <h3>🗺️ Route Visualization</h3>
-        <div class="visualization">
-          <img src="{{ result.img }}" alt="Optimized route visualization" />
-        </div>
+        <!-- fallback static image (keeps original behavior) -->
+        <h3 style="margin-top:16px;">Static visualization</h3>
+        <img src="{{ result.img }}" alt="route" />
       </div>
       {% endif %}
     </div>
+
+    <!-- Leaflet JS (CDN). Integrity removed to avoid SRI mismatch blocking the script in some browsers -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+
+    {% if result %}
+    <script>
+      // map_json : { positions: {node: [lat,lng]}, path: ['A','B','C'], edges: [[u,v], ...] }
+      const mapData = {{ result.map_json | tojson }};
+      // compute center as average lat/lng
+      const posValues = Object.values(mapData.positions);
+      let avgLat = 0, avgLng = 0;
+      posValues.forEach(p => { avgLat += p[0]; avgLng += p[1]; });
+      avgLat /= posValues.length;
+      avgLng /= posValues.length;
+
+      const map = L.map('map').setView([avgLat, avgLng], 15); // zoom chosen for demo
+
+      // tile layer (OpenStreetMap)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // draw nodes with markers and labels
+      const markers = {};
+      for (const [node, coord] of Object.entries(mapData.positions)) {
+        const marker = L.circleMarker([coord[0], coord[1]], {
+          radius: 8,
+          fillColor: '#556bff',
+          color: '#2f3bff',
+          weight: 1,
+          fillOpacity: 0.9
+        }).addTo(map);
+        marker.bindTooltip(node, {permanent: true, direction: 'right', offset: [8,0]});
+        markers[node] = marker;
+      }
+
+      // draw all edges (light)
+      mapData.edges.forEach(e => {
+        const a = mapData.positions[e[0]];
+        const b = mapData.positions[e[1]];
+        if (a && b) {
+          L.polyline([[a[0], a[1]], [b[0], b[1]]], {color: '#cbd5ff', weight: 2, opacity: 0.8}).addTo(map);
+        }
+      });
+
+      // highlight the optimized path
+      const pathNodes = mapData.path;
+      const latlngs = pathNodes.map(n => mapData.positions[n]);
+      if (latlngs.length > 0) {
+        L.polyline(latlngs, {color: '#2f8bff', weight: 5, opacity: 0.9}).addTo(map);
+        // add arrows: placing markers with arrow icon is more involved; we'll add small circles on path nodes
+        latlngs.forEach((p, idx) => {
+          L.circleMarker([p[0], p[1]], {radius: 6, fillColor:'#00d1b2', color:'#00897b', weight:1, fillOpacity:0.95}).addTo(map);
+        });
+      }
+
+      // fit map bounds to the path if available, else fit to all nodes
+      if (latlngs.length >= 2) {
+        const bounds = L.latLngBounds(latlngs);
+        map.fitBounds(bounds.pad(0.2));
+      } else {
+        const allLatLngs = posValues.map(p => [p[0], p[1]]);
+        const bounds = L.latLngBounds(allLatLngs);
+        map.fitBounds(bounds.pad(0.2));
+      }
+    </script>
+    {% endif %}
   </body>
 
 </html>
