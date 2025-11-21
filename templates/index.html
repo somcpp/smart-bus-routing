@@ -1,49 +1,102 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Smart Bus Routing</title>
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Bus Routing</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
   <body>
     <div class="container">
-      <h1>Smart Bus Routing — Demo</h1>
-      <form method="post" action="/route">
-        <label>Source
-          <select name="source">
-            {% for n in nodes %}
-            <option value="{{n}}">{{n}}</option>
-            {% endfor %}
-          </select>
-        </label>
+      <div class="header">
+        <h1>🚌 Smart Bus Routing</h1>
+        <p>Optimized city navigation powered by Dijkstra's algorithm</p>
+      </div>
 
-        <label>Target
-          <select name="target">
-            {% for n in nodes %}
-            <option value="{{n}}">{{n}}</option>
-            {% endfor %}
-          </select>
-        </label>
+      <div class="card">
+        <form method="post" action="/route">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="source">📍 Starting City</label>
+              <select name="source" id="source" required>
+                {% for n in nodes %}
+                <option value="{{n}}">{{n}}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <button type="submit">Find Optimized Route</button>
-      </form>
+            <div class="form-group">
+              <label for="target">🎯 Destination City</label>
+              <select name="target" id="target" required>
+                {% for n in nodes %}
+                <option value="{{n}}">{{n}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <button type="submit">Find Optimized Route</button>
+        </form>
+      </div>
 
       {% if result %}
-      <h2>Optimized Path: {{ result.path }}</h2>
-      <p>Path time (minutes): {{ result.time }}</p>
+      <div class="card result-card">
+        <div class="result-header">
+          <h2>Optimized Route Found</h2>
+          <!-- <span class="path-badge">{{ result.path }}</span> -->
+          <h2>Optimized Route: <span class="route">{{ result.path_pretty }}</span></h2>
+        </div>
 
-      <h3>Wait Time Stats</h3>
-      <ul>
-        <li>Old total wait (minutes): {{ result.stats.old_total_wait_minutes }}</li>
-        <li>New total wait (minutes): {{ result.stats.new_total_wait_minutes }}</li>
-        <li>Absolute reduction (minutes): {{ result.stats.absolute_reduction_minutes }}</li>
-        <li>Percent reduction: {{ result.stats.percent_reduction }}%</li>
-      </ul>
+        <div class="time-display">
+          <p>Total Journey Time: <strong>{{ result.time }} minutes</strong></p>
+        </div>
 
-      <h3>Route visualization</h3>
-      <img src="{{ result.img }}" alt="route" />
+        <h3>⏱️ Wait Time Analysis</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Previous Wait Time</div>
+            <div class="stat-value">{{ result.stats.old_total_wait_minutes }} min</div>
+          </div>
+
+          <div class="stat-box">
+            <div class="stat-label">Optimized Wait Time</div>
+            <div class="stat-value">{{ result.stats.new_total_wait_minutes }} min</div>
+          </div>
+
+          <div class="stat-box positive">
+            <div class="stat-label">Time Saved</div>
+            <div class="stat-value">{{ result.stats.absolute_reduction_minutes }} min</div>
+          </div>
+
+          <div class="stat-box positive">
+            <div class="stat-label">Efficiency Gain</div>
+            <div class="stat-value">{{ result.stats.percent_reduction }}%</div>
+          </div>
+        </div>
+
+        <h3>📊 Wait Time Explanation</h3>
+        <div class="explanation-box">
+          <h3>📌 How Wait-Time Reduction is Calculated</h3>
+          <p>Total passengers considered: <strong>{{ result.stats.total_passengers }}</strong></p>
+          <p>Old average wait per passenger: <strong>{{ result.stats.old_avg_wait }} min</strong></p>
+          <p>New average wait per passenger: <strong>{{ result.stats.new_avg_wait }} min</strong></p>
+
+          <p class="note">
+            The total wait time is the combined waiting time of all passengers at all stops.
+            A faster route means buses arrive sooner, reducing waiting time for everyone.
+          </p>
+        </div>
+
+        <h3>🗺️ Route Visualization</h3>
+        <div class="visualization">
+          <img src="{{ result.img }}" alt="Optimized route visualization" />
+        </div>
+      </div>
       {% endif %}
-
     </div>
   </body>
+
 </html>

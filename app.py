@@ -38,10 +38,12 @@ def route():
     # generate visualization
     png = draw_graph_highlight_path(G, path)
     img_inline = png_bytes_to_base64_inline(png)
+    pretty_path = " → ".join(path)
 
     return render_template('index.html', nodes=list(G.nodes()), result={
         'path': path,
         'time': length,
+        'path_pretty': pretty_path,
         'stats': stats,
         'img': img_inline
     })

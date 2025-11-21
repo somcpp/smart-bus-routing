@@ -62,16 +62,22 @@ def estimate_wait_reduction(old_route: List[str], optimized_route: List[str], in
     reduction = (old_total - new_total)
     pct = (reduction / old_total * 100.0) if old_total > 0 else 0.0
 
+    total_passengers = sum(passenger_demand.values())
+
     return {
-        'old_total_wait_minutes': old_total,
-        'new_total_wait_minutes': new_total,
-        'absolute_reduction_minutes': reduction,
-        'percent_reduction': pct,
-        'old_route_time': old_time,
-        'optimized_route_time': new_time,
-        'old_interval': old_interval,
-        'new_interval': new_interval
+        'old_total_wait_minutes': round(old_total, 2),
+        'new_total_wait_minutes': round(new_total, 2),
+        'absolute_reduction_minutes': round(reduction, 2),
+        'percent_reduction': round(pct, 2),
+        'old_route_time': round(old_time, 2),
+        'optimized_route_time': round(new_time, 2),
+        'old_interval': round(old_interval, 2),
+        'new_interval': round(new_interval, 2),
+        'total_passengers': total_passengers,
+        'old_avg_wait': round(old_interval/2, 2),
+        'new_avg_wait': round(new_interval/2, 2)
     }
+
 
 # A tiny global used by estimate_wait_reduction; loaded from app when graph created
 G_global = None
